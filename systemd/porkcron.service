@@ -9,3 +9,4 @@ ExecStart=/usr/local/bin/porkcron
 EnvironmentFile=/etc/porkcron/.env
 # uncomment if you're running nginx:
 # ExecStartPost=/usr/bin/systemctl reload nginx.service
+ExecStartPost=/usr/bin/systemctl reload apache2.service
