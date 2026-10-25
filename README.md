@@ -18,7 +18,7 @@ Do not forget to enable the API access for your domain!
 When you're ready, clone the repository somewhere on your server:
 
 ```shell
-git clone https://github.com/tmzane/porkcron
+git clone https://github.com/Crinitys/porkcron
 ```
 
 Take a look at the `.env.example` file.
