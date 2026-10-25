@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from urllib import request
+from urllib import error, request
 
 # https://porkbun.com/api/json/v3/documentation
 DEFAULT_API_URL = "https://api.porkbun.com/api/json/v3"
@@ -33,16 +33,23 @@ def main() -> None:
 
     for domain in domains:
         url = os.getenv("API_URL", DEFAULT_API_URL) + "/ssl/retrieve/" + domain
-        body = json.dumps({"apikey": api_key, "secretapikey": secret_key}).encode()
-        headers = {"Content-Type": "application/json"}
+        headers = {"X-API-Key": api_key, "X-Secret-API-Key": secret_key}
 
         logging.info(f"downloading SSL bundle for {domain}")
-        req = request.Request(url, data=body, headers=headers, method="POST")
-        with request.urlopen(req) as resp:
-            data = json.load(resp)
+        req = request.Request(url, headers=headers, method="GET")
+        try:
+            with request.urlopen(req) as resp:
+                data = json.load(resp)
+        except error.HTTPError as e:
+            # the API reports errors as 4xx with a JSON body that explains the cause
+            try:
+                data = json.load(e)
+            except ValueError:
+                exit(f"{domain}: {e}")
 
-        if data["status"] == "ERROR":
-            exit(data["message"])
+        if data.get("status") != "SUCCESS":
+            hint = data.get("next_action", {}).get("hint", "")
+            exit(f"{domain}: {data.get('message')} [{data.get('code')}] {hint}".strip())
 
         certificate_path = Path(certificate_path_template.replace(DOMAIN_PLACEHOLDER, domain))
         logging.info(f"saving certificate to {certificate_path}")
